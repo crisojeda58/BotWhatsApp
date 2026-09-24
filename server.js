@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const QRCode = require('qrcode');
 const { 
   default: makeWASocket, 
@@ -27,8 +28,21 @@ let sock = null;
 
 const logger = pino({ level: 'silent' });
 
-async function refreshGroups() {
-  if (!sock) return [];
+let lastGroupsFetchTime = 0;
+let isFetchingGroups = false;
+
+async function refreshGroups(force = false) {
+  if (!sock || clientStatus !== 'READY') return availableGroups;
+  
+  const now = Date.now();
+  // Evitar llamar más de 1 vez cada 30 segundos a menos que sea forzado
+  if (!force && (now - lastGroupsFetchTime < 30000) && availableGroups.length > 0) {
+    return availableGroups;
+  }
+
+  if (isFetchingGroups) return availableGroups;
+  isFetchingGroups = true;
+
   try {
     const groupsMap = await sock.groupFetchAllParticipating();
     const groups = Object.values(groupsMap).map(g => ({
@@ -38,11 +52,14 @@ async function refreshGroups() {
     }));
 
     availableGroups = groups;
+    lastGroupsFetchTime = Date.now();
     console.log(`[WhatsApp] ${availableGroups.length} grupos detectados exitosamente.`);
     return availableGroups;
   } catch (err) {
     console.warn('[WhatsApp] Error actualizando lista de grupos:', err.message);
     return availableGroups;
+  } finally {
+    isFetchingGroups = false;
   }
 }
 
@@ -89,10 +106,16 @@ async function connectToWhatsApp() {
       currentQrCodeUrl = null;
       connectedUser = null;
 
-      if (shouldReconnect) {
+      if (statusCode === DisconnectReason.loggedOut) {
+        console.log('[WhatsApp] Sesión cerrada / inválida (401). Limpiando credenciales antiguas y reiniciando...');
+        try {
+          fs.rmSync(authDir, { recursive: true, force: true });
+        } catch (e) {
+          console.warn('No se pudo borrar carpeta de auth:', e.message);
+        }
+        setTimeout(connectToWhatsApp, 2000);
+      } else if (shouldReconnect) {
         setTimeout(connectToWhatsApp, 3000);
-      } else {
-        console.log('[WhatsApp] Sesión cerrada permanentemente. Se requiere escanear QR nuevamente.');
       }
     } else if (connection === 'open') {
       console.log('[WhatsApp] Cliente listo y conectado exitosamente.');
@@ -146,6 +169,32 @@ app.post('/api/pair-code', async (req, res) => {
   }
 });
 
+// Desvincular sesión / Resetear cliente
+app.post('/api/logout', async (req, res) => {
+  try {
+    const authDir = path.join(__dirname, '.baileys_auth');
+    if (sock) {
+      try {
+        await sock.logout();
+      } catch (e) {}
+    }
+    try {
+      fs.rmSync(authDir, { recursive: true, force: true });
+    } catch (e) {}
+
+    clientStatus = 'INITIALIZING';
+    currentQrCodeUrl = null;
+    connectedUser = null;
+    availableGroups = [];
+
+    setTimeout(connectToWhatsApp, 1000);
+    res.json({ success: true, message: 'Sesión reiniciada. Se generará un nuevo QR.' });
+  } catch (err) {
+    console.error('Error al desvincular:', err);
+    res.status(500).json({ error: 'Error al reiniciar sesión: ' + err.message });
+  }
+});
+
 // Obtener estado general
 app.get('/api/status', async (req, res) => {
   if (clientStatus === 'READY' && availableGroups.length === 0) {
@@ -165,7 +214,7 @@ app.get('/api/groups', async (req, res) => {
   if (clientStatus !== 'READY') {
     return res.status(400).json({ error: 'Cliente no conectado aún' });
   }
-  const groups = await refreshGroups();
+  const groups = await refreshGroups(true);
   res.json({ success: true, groups });
 });
 

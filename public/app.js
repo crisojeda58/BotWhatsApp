@@ -22,6 +22,35 @@ function initApp() {
   if (btnPair) {
     btnPair.addEventListener('click', handleRequestPairCode);
   }
+
+  // Escuchar botón de Desvincular / Logout
+  const btnLogout = document.getElementById('btn-logout');
+  if (btnLogout) {
+    btnLogout.addEventListener('click', handleLogout);
+  }
+}
+
+/**
+ * Cierra sesión y reinicia el cliente de WhatsApp
+ */
+async function handleLogout() {
+  if (!confirm('¿Estás seguro de que deseas cerrar sesión y desvincular este dispositivo?')) {
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/logout', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok) {
+      showToast('Sesión desvinculada. Generando nuevo código de acceso...', 'info');
+      fetchStatus();
+    } else {
+      showToast(data.error || 'Error al desvincular', 'error');
+    }
+  } catch (err) {
+    console.error('Error cerrando sesión:', err);
+    showToast('Error de conexión al cerrar sesión', 'error');
+  }
 }
 
 /**
