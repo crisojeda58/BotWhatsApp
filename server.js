@@ -7,7 +7,8 @@ const {
   default: makeWASocket, 
   useMultiFileAuthState, 
   DisconnectReason, 
-  fetchLatestBaileysVersion 
+  fetchLatestBaileysVersion,
+  Browsers
 } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const { loadConfig, saveConfig, loadLogs, clearLogs, sendPoll, initScheduler } = require('./scheduler');
@@ -77,7 +78,7 @@ async function connectToWhatsApp() {
     logger,
     printQRInTerminal: false,
     generateHighQualityLinkPreview: true,
-    browser: ['Prueba Movil', 'Chrome', '1.0.0']
+    browser: Browsers.ubuntu('Chrome')
   });
 
   // Guardar credenciales al actualizarse
@@ -157,7 +158,11 @@ app.post('/api/pair-code', async (req, res) => {
   }
 
   try {
-    const cleanNumber = phoneNumber.replace(/[^0-9]/g, '');
+    const cleanNumber = phoneNumber.toString().replace(/[^0-9]/g, '');
+    if (cleanNumber.length < 10) {
+      return res.status(400).json({ error: 'Número inválido. Asegúrate de incluir el código de país (ej: 569...)' });
+    }
+
     const code = await sock.requestPairingCode(cleanNumber);
     // Formatear código estilo 1234-5678
     const formattedCode = code?.match(/.{1,4}/g)?.join('-') || code;
