@@ -1,0 +1,56 @@
+{
+  "schedules": [
+    {
+      "id": "varones-sabado",
+      "dayOfWeek": 3,
+      "dayName": "Miércoles",
+      "time": "11:00",
+      "groupName": "TC Varones",
+      "title": "Entrenamiento Sabado 19:00hr",
+      "options": [
+        "Voy",
+        "No puedo"
+      ],
+      "enabled": true
+    },
+    {
+      "id": "varones-domingo",
+      "dayOfWeek": 3,
+      "dayName": "Miércoles",
+      "time": "11:00",
+      "groupName": "TC Varones",
+      "title": "Entrenamiento Domingo 19:00hr",
+      "options": [
+        "Voy",
+        "No puedo"
+      ],
+      "enabled": true
+    },
+    {
+      "id": "damas-martes",
+      "dayOfWeek": 0,
+      "dayName": "Domingo",
+      "time": "11:00",
+      "groupName": "TC DAMAS",
+      "title": "Entrenamiento Martes 19:30hr",
+      "options": [
+        "Voy",
+        "No voy"
+      ],
+      "enabled": true
+    },
+    {
+      "id": "damas-jueves",
+      "dayOfWeek": 0,
+      "dayName": "Domingo",
+      "time": "11:00",
+      "groupName": "TC DAMAS",
+      "title": "Entrenamiento Jueves 19:30hr",
+      "options": [
+        "Voy",
+        "No voy"
+      ],
+      "enabled": true
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+overrides:
+  extract-zip: ">=2.0.1"
+onlyBuiltDependencies:
+  - puppeteer
+allowBuilds:
+  '@whiskeysockets/baileys': set this to true or false
+  protobufjs: set this to true or false

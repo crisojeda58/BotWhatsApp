@@ -1,0 +1,14 @@
+services:
+  whatsapp-bot:
+    build: .
+    container_name: whatsapp_bot
+    restart: always
+    ports:
+      - "3050:3050"
+    volumes:
+      # Persistir la sesión de WhatsApp y las tareas programadas
+      - ./.baileys_auth:/app/.baileys_auth
+      - ./config.json:/app/config.json
+      - ./data:/app/data
+    environment:
+      - NODE_ENV=production
