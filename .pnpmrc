@@ -1,2 +1,4 @@
-ignoredBuilds:
-  - puppeteer
+# Configuración optimizada para Termux / Android y entornos estándar
+node-linker=hoisted
+side-effects-cache=false
+shared-workspace-lockfile=false

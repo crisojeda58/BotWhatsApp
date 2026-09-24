@@ -116,4 +116,4 @@ Prueba movil/
 ```
 
 ---
-*Desarrollado con Node.js & whatsapp-web.js*
+*Desarrollado con Node.js & Baileys*
